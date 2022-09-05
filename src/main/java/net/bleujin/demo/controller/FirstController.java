@@ -1,36 +1,23 @@
 package net.bleujin.demo.controller;
 
 import java.io.IOException;
-import java.lang.reflect.ParameterizedType;
-import java.lang.reflect.TypeVariable;
 import java.sql.SQLException;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
-import javax.servlet.http.HttpServletRequest;
-
-import org.apache.commons.lang.ClassUtils;
-import org.apache.el.util.ReflectionUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
-import org.springframework.web.servlet.tags.Param;
 
-import net.ion.framework.db.DBController;
+import net.bleujin.demo.config.ConfigContext;
 import net.ion.framework.db.Rows;
 import net.ion.framework.db.procedure.IUserProcedure;
 import net.ion.framework.parse.gson.JsonObject;
-import net.ion.framework.parse.gson.reflect.TypeToken;
 import net.ion.framework.util.Debug;
-import net.ion.framework.util.ListUtil;
 
 @Controller
 public class FirstController {
@@ -40,6 +27,9 @@ public class FirstController {
 //        return "index";
 //    }
 //    
+	
+	@Autowired
+	private ConfigContext context ;
 
 	@GetMapping(value = "/message") // , produces=MediaType.APPLICATION_JSON_VALUE
 	@ResponseBody
@@ -54,24 +44,26 @@ public class FirstController {
 			member.put("weight", i + 30);
 			members.put(i, member);
 		}
+		
+		
+		Debug.line(context) ;
+		
 		return members;
 	}
 
-	@Autowired
-	DBController dc;
 
 	@GetMapping(value = "/api/db", produces = "application/json; charset=UTF-8")
 	@ResponseBody
 	public String rowsByResponseBody() throws IOException, SQLException {
 
-		Rows rows = dc.createUserProcedure("test@copyby(?)").addParam(5).execQuery();
+		Rows rows = context.dc().createUserProcedure("test@copyby(?)").addParam(5).execQuery();
 		return new JsonStringHandler().handle(rows);
 	}
 
 	@PostMapping(value = "/api/query", produces = "application/json")
 	@ResponseBody
 	public String procQueryBy(@RequestBody HashMap<String, Object> body) throws SQLException {
-		IUserProcedure uproc = dc.createUserProcedure(body.get("proc").toString());
+		IUserProcedure uproc = context.dc().createUserProcedure(body.get("proc").toString());
 		for (Object val : ((List) body.get("args"))) {
 			Debug.debug(val, val.getClass());
 			if (val instanceof List) {
